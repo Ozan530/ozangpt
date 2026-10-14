@@ -1,614 +1,135 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Sans Fight</title>
-
-<style>
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        margin: 0;
-        background: #000;
-        color: white;
-        font-family: "Courier New", monospace;
-        overflow: hidden;
-        user-select: none;
-    }
-
-    #game {
-        width: 900px;
-        max-width: 100vw;
-        height: 650px;
-        margin: auto;
-        position: relative;
-        background: #000;
-        border: 4px solid #fff;
-        overflow: hidden;
-    }
-
-    #dialogue {
-        position: absolute;
-        top: 25px;
-        left: 40px;
-        right: 40px;
-        min-height: 80px;
-        font-size: 20px;
-        line-height: 1.5;
-    }
-
-    #battleBox {
-        position: absolute;
-        width: 560px;
-        height: 300px;
-        left: 50%;
-        top: 260px;
-        transform: translateX(-50%);
-        border: 4px solid white;
-        overflow: hidden;
-        background: #050505;
-    }
-
-    #heart {
-        position: absolute;
-        width: 18px;
-        height: 18px;
-        background: red;
-        transform: rotate(45deg);
-        left: 271px;
-        top: 140px;
-        z-index: 10;
-    }
-
-    #heart::before,
-    #heart::after {
-        content: "";
-        position: absolute;
-        width: 18px;
-        height: 18px;
-        background: red;
-        border-radius: 50%;
-    }
-
-    #heart::before {
-        left: -9px;
-        top: 0;
-    }
-
-    #heart::after {
-        left: 0;
-        top: -9px;
-    }
-
-    .bone {
-        position: absolute;
-        background: white;
-        z-index: 5;
-        box-shadow: 0 0 4px white;
-    }
-
-    .bone.horizontal {
-        height: 14px;
-    }
-
-    .bone.vertical {
-        width: 14px;
-    }
-
-    .bone::before,
-    .bone::after {
-        content: "";
-        position: absolute;
-        background: white;
-        border-radius: 50%;
-    }
-
-    .bone.horizontal::before,
-    .bone.horizontal::after {
-        width: 22px;
-        height: 22px;
-        top: -4px;
-    }
-
-    .bone.horizontal::before {
-        left: -10px;
-    }
-
-    .bone.horizontal::after {
-        right: -10px;
-    }
-
-    .bone.vertical::before,
-    .bone.vertical::after {
-        width: 22px;
-        height: 22px;
-        left: -4px;
-    }
-
-    .bone.vertical::before {
-        top: -10px;
-    }
-
-    .bone.vertical::after {
-        bottom: -10px;
-    }
-
-    #sans {
-        position: absolute;
-        left: 50%;
-        top: 125px;
-        transform: translateX(-50%);
-        font-size: 70px;
-        color: white;
-        text-shadow: 0 0 10px #fff;
-    }
-
-    #stats {
-        position: absolute;
-        bottom: 25px;
-        left: 40px;
-        right: 40px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 20px;
-    }
-
-    #hpBar {
-        width: 180px;
-        height: 20px;
-        border: 2px solid white;
-        display: inline-block;
-        vertical-align: middle;
-    }
-
-    #hpFill {
-        height: 100%;
-        width: 100%;
-        background: #ffff00;
-    }
-
-    #menu {
-        position: absolute;
-        bottom: 70px;
-        left: 0;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-    }
-
-    button {
-        background: black;
-        color: #ff9b00;
-        border: 3px solid #ff9b00;
-        padding: 10px 24px;
-        font-family: inherit;
-        font-size: 20px;
-        cursor: pointer;
-    }
-
-    button:hover {
-        background: #ff9b00;
-        color: black;
-    }
-
-    #gameOver {
-        display: none;
-        position: absolute;
-        inset: 0;
-        background: rgba(0,0,0,.92);
-        z-index: 100;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        text-align: center;
-    }
-
-    #gameOver h1 {
-        font-size: 50px;
-        margin: 10px;
-    }
-
-    #gameOver p {
-        font-size: 22px;
-    }
-
-    .damage {
-        position: absolute;
-        color: yellow;
-        font-size: 30px;
-        font-weight: bold;
-        z-index: 50;
-        pointer-events: none;
-        animation: damageAnim .5s forwards;
-    }
-
-    @keyframes damageAnim {
-        0% {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(-50px);
-            opacity: 0;
-        }
-    }
-
-    #hint {
-        position: absolute;
-        bottom: 2px;
-        width: 100%;
-        text-align: center;
-        color: #777;
-        font-size: 14px;
-    }
-</style>
-</head>
-
-<body>
-
-<div id="game">
-
-    <div id="sans">☠</div>
-
-    <div id="dialogue">
-        sans:<br>
-        <span id="text">heya. you're gonna have a bad time.</span>
-    </div>
-
-    <div id="battleBox">
-        <div id="heart"></div>
-    </div>
-
-    <div id="menu">
-        <button onclick="attack()">FIGHT</button>
-        <button onclick="heal()">ACT</button>
-        <button onclick="heal()">ITEM</button>
-        <button onclick="spare()">MERCY</button>
-    </div>
-
-    <div id="stats">
-        <div>HP 20 / 20 <span id="hpBar"><span id="hpFill"></span></span></div>
-        <div>LV 19</div>
-        <div>SANS 92</div>
-    </div>
-
-    <div id="hint">
-        WASD / Ok Tuşları = Hareket &nbsp; | &nbsp; Z / ENTER = Saldır
-    </div>
-
-    <div id="gameOver">
-        <h1 id="resultTitle">GAME OVER</h1>
-        <p id="resultText"></p>
-        <button onclick="location.reload()">TEKRAR DENE</button>
-    </div>
-
-</div>
-
-<script>
-const game = document.getElementById("game");
-const battleBox = document.getElementById("battleBox");
-const heart = document.getElementById("heart");
-const hpFill = document.getElementById("hpFill");
-const text = document.getElementById("text");
-const gameOver = document.getElementById("gameOver");
-const resultTitle = document.getElementById("resultTitle");
-const resultText = document.getElementById("resultText");
-
-let heartX = 271;
-let heartY = 140;
-
-let playerHP = 20;
-let sansHP = 92;
-
-let keys = {};
-let attackCooldown = false;
-let invincible = false;
-let fightStarted = false;
-let wave = 0;
-
-const speed = 4;
-
-document.addEventListener("keydown", e => {
-    keys[e.key.toLowerCase()] = true;
-
-    if (e.key === "Enter" || e.key.toLowerCase() === "z") {
-        attack();
-    }
-
-    if (e.key === "Escape") {
-        spare();
-    }
-});
-
-document.addEventListener("keyup", e => {
-    keys[e.key.toLowerCase()] = false;
-});
-
-function updateHeart() {
-    let dx = 0;
-    let dy = 0;
-
-    if (keys["arrowleft"] || keys["a"]) dx -= speed;
-    if (keys["arrowright"] || keys["d"]) dx += speed;
-    if (keys["arrowup"] || keys["w"]) dy -= speed;
-    if (keys["arrowdown"] || keys["s"]) dy += speed;
-
-    heartX += dx;
-    heartY += dy;
-
-    heartX = Math.max(15, Math.min(527, heartX));
-    heartY = Math.max(15, Math.min(267, heartY));
-
-    heart.style.left = heartX + "px";
-    heart.style.top = heartY + "px";
-
-    requestAnimationFrame(updateHeart);
-}
-
-updateHeart();
-
-function random(min, max) {
-    return Math.random() * (max - min) + min;
-}
-
-function attack() {
-    if (attackCooldown || sansHP <= 0) return;
-
-    attackCooldown = true;
-
-    let damage = Math.floor(random(5, 14));
-
-    sansHP -= damage;
-
-    showDamage(damage);
-
-    if (sansHP <= 0) {
-        sansHP = 0;
-        win();
-        return;
-    }
-
-    text.innerHTML =
-        "heh.<br>nice try. you're not getting a free hit.";
-
-    setTimeout(() => {
-        attackCooldown = false;
-        startWave();
-    }, 900);
-}
-
-function showDamage(amount) {
-    const d = document.createElement("div");
-
-    d.className = "damage";
-    d.innerText = "-" + amount;
-
-    d.style.left = random(430, 500) + "px";
-    d.style.top = random(130, 200) + "px";
-
-    game.appendChild(d);
-
-    setTimeout(() => d.remove(), 600);
-}
-
-function heal() {
-    if (playerHP <= 0) return;
-
-    playerHP = Math.min(20, playerHP + 4);
-
-    updateHP();
-
-    text.innerHTML =
-        "you tried to heal.<br>sans looks mildly disappointed.";
-
-    startWave();
-}
-
-function spare() {
-    if (sansHP <= 15) {
-        text.innerHTML =
-            "sans:<br>...fine. you win. this time.";
-
-        setTimeout(() => {
-            resultTitle.innerText = "YOU SPARED SANS";
-            resultText.innerText = "you somehow survived the bad time.";
-            gameOver.style.display = "flex";
-        }, 1200);
-    } else {
-        text.innerHTML =
-            "sans:<br>you really think i'm gonna let you spare me?";
-
-        startWave();
-    }
-}
-
-function startWave() {
-    wave++;
-
-    if (wave % 3 === 0) {
-        boneRain();
-    } else if (wave % 3 === 1) {
-        horizontalBones();
-    } else {
-        verticalBones();
-    }
-}
-
-function createBone(x, y, w, h, vx, vy, duration = 4500) {
-    const bone = document.createElement("div");
-
-    bone.className = "bone";
-
-    bone.style.left = x + "px";
-    bone.style.top = y + "px";
-    bone.style.width = w + "px";
-    bone.style.height = h + "px";
-
-    battleBox.appendChild(bone);
-
-    let start = performance.now();
-
-    function move(time) {
-        let elapsed = time - start;
-
-        x += vx;
-        y += vy;
-
-        bone.style.left = x + "px";
-        bone.style.top = y + "px";
-
-        if (collision(bone) && !invincible) {
-            damagePlayer();
-        }
-
-        if (elapsed < duration &&
-            x > -100 && x < 650 &&
-            y > -100 && y < 400) {
-
-            requestAnimationFrame(move);
-
-        } else {
-            bone.remove();
-        }
-    }
-
-    requestAnimationFrame(move);
-}
-
-function horizontalBones() {
-    text.innerHTML =
-        "sans:<br>let's see you dodge this.";
-
-    for (let i = 0; i < 7; i++) {
-        setTimeout(() => {
-            let fromLeft = Math.random() > .5;
-
-            createBone(
-                fromLeft ? -70 : 630,
-                random(10, 270),
-                90,
-                14,
-                fromLeft ? 5 : -5,
-                0,
-                5000
-            );
-        }, i * 350);
-    }
-}
-
-function verticalBones() {
-    text.innerHTML =
-        "sans:<br>look out. they're coming from above.";
-
-    for (let i = 0; i < 8; i++) {
-        setTimeout(() => {
-            createBone(
-                random(10, 530),
-                -50,
-                14,
-                80,
-                0,
-                4.5,
-                4500
-            );
-        }, i * 300);
-    }
-}
-
-function boneRain() {
-    text.innerHTML =
-        "sans:<br>you know what comes next.";
-
-    for (let i = 0; i < 14; i++) {
-        setTimeout(() => {
-            let side = Math.random() > .5;
-
-            createBone(
-                side ? -60 : 620,
-                random(0, 270),
-                100,
-                14,
-                side ? 5.5 : -5.5,
-                0,
-                5000
-            );
-        }, i * 220);
-    }
-}
-
-function collision(bone) {
-    const a = heart.getBoundingClientRect();
-    const b = bone.getBoundingClientRect();
-
-    return !(
-        a.right < b.left ||
-        a.left > b.right ||
-        a.bottom < b.top ||
-        a.top > b.bottom
-    );
-}
-
-function damagePlayer() {
-    if (invincible) return;
-
-    invincible = true;
-
-    playerHP--;
-
-    updateHP();
-
-    heart.style.background = "white";
-
-    setTimeout(() => {
-        heart.style.background = "red";
-        invincible = false;
-    }, 350);
-
-    if (playerHP <= 0) {
-        lose();
-    }
-}
-
-function updateHP() {
-    hpFill.style.width = (playerHP / 20 * 100) + "%";
-
-    if (playerHP <= 5) {
-        hpFill.style.background = "red";
-    } else {
-        hpFill.style.background = "yellow";
-    }
-}
-
-function lose() {
-    resultTitle.innerText = "GAME OVER";
-    resultText.innerText =
-        "sans: kid... maybe next time don't get hit.";
-    gameOver.style.display = "flex";
-}
-
-function win() {
-    document.querySelectorAll(".bone").forEach(b => b.remove());
-
-    text.innerHTML =
-        "sans:<br>...you actually did it.";
-
-    setTimeout(() => {
-        resultTitle.innerText = "SANS DEFEATED";
-        resultText.innerText =
-            "you won the fight. congratulations.";
-        gameOver.style.display = "flex";
-    }, 1200);
-}
-
-setTimeout(() => {
-    startWave();
-}, 1500);
-</script>
-
-</body>
-</html>
+<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Dungeons 2 - Kerpiç Köyü</title>
+<style>:root{--bg:#14110f}html,body{height:100%;margin:0;background:var(--bg);font-family:monospace}body{display:flex;align-items:center;justify-content:center}canvas{max-width:100%;max-height:100%;border:3px solid #4a3a2a}</style></head><body><canvas id=c width=960 height=600></canvas><script>
+const cv=document.getElementById('c'),g=cv.getContext('2d'),AX=.8,BX=.4,W=1500,H=1100;
+let cx=0,cy=0;const pr=(x,y,z=0)=>[(x-y)*AX-cx+480,(x+y)*BX-z-cy+300];
+const sc={};function sh(c,f){const k=c+f;if(sc[k])return sc[k];const n=parseInt(c.slice(1),16);return sc[k]=`rgb(${Math.min(255,(n>>16)*f)|0},${Math.min(255,((n>>8)&255)*f)|0},${Math.min(255,(n&255)*f)|0})`}
+function poly(p,f){g.fillStyle=f;g.beginPath();g.moveTo(...p[0]);for(let i=1;i<p.length;i++)g.lineTo(...p[i]);g.fill()}
+function bx(x,y,z,hw,hd,h,col,fl){if(fl>0)col='#ffffff';const t=z+h,a=pr(x-hw,y-hd,t),b=pr(x+hw,y-hd,t),c=pr(x+hw,y+hd,t),d=pr(x-hw,y+hd,t);
+ poly([d,c,pr(x+hw,y+hd,z),pr(x-hw,y+hd,z)],sh(col,.85));poly([c,b,pr(x+hw,y-hd,z),pr(x+hw,y+hd,z)],sh(col,.6));poly([a,b,c,d],sh(col,1.12))}
+function shadow(x,y,r){const p=pr(x,y);g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(p[0],p[1],r*1.13,r*.57,0,0,7);g.fill()}
+function human(x,y,s,skin,shirt,pants,wk,fl){const w=Math.sin(wk)*4*s;shadow(x,y,9*s);
+ bx(x-4*s,y+w,0,3.5*s,3.5*s,10*s,pants,fl);bx(x+4*s,y-w,0,3.5*s,3.5*s,10*s,pants,fl);bx(x,y,10*s,8*s,5*s,13*s,shirt,fl);
+ bx(x-10*s,y-w,10*s,2.5*s,2.5*s,12*s,skin,fl);bx(x+10*s,y+w,10*s,2.5*s,2.5*s,12*s,skin,fl);bx(x,y,23*s,5.5*s,5.5*s,10*s,skin,fl);
+ if(!fl){bx(x-2.5*s,y+5.6*s,27*s,1*s,.4*s,2*s,'#111');bx(x+2.5*s,y+5.6*s,27*s,1*s,.4*s,2*s,'#111')}}
+function spider(x,y,wk,fl){shadow(x,y,14);for(let i=0;i<4;i++){const w=Math.sin(wk+i)*3;bx(x-12,y-8+i*5+w,2,7,.8,2,'#222',fl);bx(x+12,y-8+i*5-w,2,7,.8,2,'#222',fl)}
+ bx(x,y,4,7,9,7,'#4a2a4a',fl);bx(x,y+10,5,4,4,5,'#5a3a5a',fl);if(!fl){bx(x-2,y+14.2,8,1,.3,2,'#f22');bx(x+2,y+14.2,8,1,.3,2,'#f22')}}
+const R=[[0,0,W,60],[0,H-60,W,60],[0,0,60,H],[W-60,0,60,H]],BL=[[140,120,220,160,70,'#8a8a8a','#444'],[650,110,200,150,60,'#b08a5a','#a33'],[1100,140,200,150,60,'#c9a66b','#a33'],[900,700,180,140,55,'#b08a5a','#a33'],[200,760,200,150,60,'#c9a66b','#36a']],
+TR=[[560,480],[1000,500],[500,900],[1200,950],[1250,600],[450,300],[700,950]];
+BL.forEach(b=>R.push([b[0],b[1],b[2],b[3]]));R.push([740,520,60,60]);TR.forEach(t=>R.push([t[0]-8,t[1]-8,16,16]));
+const NPC={x:250,y:330};
+const IT={wsword:{n:'Tahta Kılıç',t:'w',d:6,cd:.4,rg:75,ic:'🗡️',col:'#a87a4a'},isword:{n:'Demir Kılıç',t:'w',d:12,cd:.4,rg:80,ic:'⚔️',col:'#ddd'},dsword:{n:'Elmas Kılıç',t:'w',d:20,cd:.38,rg:85,ic:'⚔️',col:'#3dd'},axe:{n:'Balta',t:'w',d:18,cd:.75,rg:85,ic:'🪓',col:'#caa'},
+ iarm:{n:'Demir Zırh',t:'a',def:4,ic:'🛡️',col:'#c0c0c0'},darm:{n:'Elmas Zırh',t:'a',def:8,ic:'🛡️',col:'#3dd'},potion:{n:'Can İksiri',t:'p',ic:'🧪',c:1}};
+const SHOP=[['isword',6],['dsword',16],['axe',10],['iarm',8],['darm',18],['potion',3]];
+const STORY=['Huzurlu Kerpiç Köyü yıllardır sessizdi...','Bir gece zindanın derinliklerinden zombiler yükseldi.','Köylüler kaçtı. Geriye sen ve yaşlı demirci Torin kaldı.','Önce köyü zayıf zombilerden temizle.','Sonra Torin\'den silah ve zırh alıp güçlen!'];
+const keys={};let mouse={x:480,y:300},scene='menu',ov=null,sti=0,P,E=[],L=[],A=[],F=[],wave=0,phase=0,t=0,shake=0,msg='',msgT=0,obj='',wcd=0,UB=[],hov=0;
+const clone=k=>({...IT[k],k});
+function give(k){const it=clone(k);if(k=='potion'){for(const a of [...P.hot,...P.bag])if(a&&a.k=='potion'){a.c++;return}}
+ let arr=k=='potion'?P.hot:P.bag,i=arr.indexOf(null);if(i<0){arr=P.bag;i=arr.indexOf(null)}if(i>=0)arr[i]=it}
+function start(){P={x:W/2,y:H/2+100,r:13,hp:100,max:100,xp:0,lvl:1,cd:0,sw:0,ang:0,hit:0,em:0,sel:0,wk:0,armor:null,hot:[clone('wsword'),clone('potion'),null],bag:Array(12).fill(null),wp:null};
+ E=[];L=[];A=[];F=[];wave=0;phase=0;ov=null;scene='play';obj='Köydeki zombileri yen!';say('Tab: envanter · 1-3: slot');for(let i=0;i<4;i++)spawn('zombie',1)}
+const def=()=>P.armor?P.armor.def:0,dmgB=()=>(P.lvl-1)*2;
+function say(s){msg=s;msgT=3.5}
+const TY={zombie:{hp:30,spd:60,dmg:8,r:14,xp:6},skeleton:{hp:20,spd:70,dmg:6,r:13,xp:8},spider:{hp:14,spd:150,dmg:5,r:11,xp:5},boss:{hp:300,spd:75,dmg:20,r:26,xp:80}};
+function hitW(x,y,r){return R.some(w=>x+r>w[0]&&x-r<w[0]+w[2]&&y+r>w[1]&&y-r<w[1]+w[3])}
+function spawn(k,weak){const d=TY[k];let x,y;do{x=80+Math.random()*(W-160);y=80+Math.random()*(H-160)}while(Math.hypot(x-P.x,y-P.y)<350||hitW(x,y,d.r+8));
+ const m=weak?.4:1+wave*.1,hp=d.hp*m;E.push({k,x,y,r:d.r,hp,max:hp,spd:d.spd*(weak?.7:1),dmg:weak?3:d.dmg,xp:d.xp,cd:1+Math.random(),kx:0,ky:0,fl:0,ch:0,wk:0})}
+function nextWave(){wave++;if(wave%4==0){spawn('boss');say('👑 MİNİ BOSS!')}else say('Gece saldırısı! Dalga '+wave);
+ for(let i=0;i<2+wave;i++){const r=Math.random();spawn(r<.5?'zombie':r<.8?'skeleton':'spider')}obj='Köyü koru! Dalga '+wave}
+function move(o,dx,dy){if(!hitW(o.x+dx,o.y,o.r))o.x+=dx;if(!hitW(o.x,o.y+dy,o.r))o.y+=dy}
+function pop(x,y,s,c){F.push({x,y,z:40,s,c,t:.9})}
+function attack(){if(P.cd>0)return;const it=P.hot[P.sel];
+ if(it&&it.t=='p'){if(P.hp>=P.max)return;P.hp=Math.min(P.max,P.hp+50);pop(P.x,P.y,'+50','#6f6');if(--it.c<=0)P.hot[P.sel]=null;P.cd=.5;return}
+ if(it&&it.t=='a')return;const w=it||{d:3,cd:.4,rg:50};P.cd=w.cd;P.sw=.2;P.wp=it;
+ for(const e of E){if(Math.hypot(e.x-P.x,e.y-P.y)<w.rg+e.r){let a=Math.atan2(e.y-P.y,e.x-P.x)-P.ang;a=Math.atan2(Math.sin(a),Math.cos(a));
+  if(Math.abs(a)<1.2){const dm=Math.round((w.d+dmgB())*(.85+Math.random()*.3));e.hp-=dm;e.fl=.12;e.kx=Math.cos(P.ang)*260;e.ky=Math.sin(P.ang)*260;pop(e.x,e.y,dm,'#ffd54a');shake=4}}}}
+function hurt(d){d=Math.max(1,d-def());P.hp-=d;P.hit=.2;shake=6;pop(P.x,P.y,'-'+d,'#ff5050');if(P.hp<=0)scene='dead'}
+const LI={em:'💎',heart:'❤️',potion:'🧪'};
+function drop(e){const b=e.k=='boss';L.push({x:e.x,y:e.y,t:'em',v:b?10:1+(Math.random()<.4?1:0)});if(Math.random()<.25)L.push({x:e.x+14,y:e.y,t:'heart'});if(Math.random()<.12)L.push({x:e.x-14,y:e.y,t:'potion'});
+ P.xp+=e.xp;while(P.xp>=P.lvl*20){P.xp-=P.lvl*20;P.lvl++;P.max+=10;P.hp=P.max;say('⬆️ LEVEL '+P.lvl+'!')}}
+function pick(l){if(l.t=='em'){P.em+=l.v;pop(P.x,P.y,'+'+l.v+'💎','#6ef')}else if(l.t=='heart')P.hp=Math.min(P.max,P.hp+25);else give('potion')}
+function update(dt){t+=dt;msgT-=dt;P.cd-=dt;P.sw-=dt;P.hit-=dt;shake*=.85;
+ const ix=(keys.d?1:0)-(keys.a?1:0),iy=(keys.s?1:0)-(keys.w?1:0);
+ if(ix||iy){const wx=ix/AX+iy/BX,wy=iy/BX-ix/AX,m=Math.hypot(wx,wy),sp=170;move(P,wx/m*sp*dt,wy/m*sp*dt);P.wk+=dt*12}
+ const sx=(mouse.x+cx-480)/AX,sy=(mouse.y+cy-300+18)/BX;P.ang=Math.atan2((sy-sx)/2-P.y,(sx+sy)/2-P.x);
+ for(const e of E){e.cd-=dt;e.fl-=dt;e.wk+=dt*8;const d=Math.hypot(P.x-e.x,P.y-e.y)||1,ux=(P.x-e.x)/d,uy=(P.y-e.y)/d;e.kx*=.85;e.ky*=.85;move(e,e.kx*dt,e.ky*dt);
+  if(e.k=='skeleton'){const s=d<200?-1:d>280?1:0;move(e,ux*e.spd*s*dt,uy*e.spd*s*dt);if(e.cd<=0&&d<450){e.cd=1.8;A.push({x:e.x,y:e.y,vx:ux*260,vy:uy*260,t:2})}}
+  else if(e.k=='boss'){if(e.ch>0){e.ch-=dt;move(e,e.dx*380*dt,e.dy*380*dt);if(d<e.r+P.r&&P.hit<=0)hurt(e.dmg)}else{move(e,ux*e.spd*dt,uy*e.spd*dt);
+   if(e.cd<=0){e.cd=3;e.ch=.6;e.dx=ux;e.dy=uy;for(let i=0;i<8;i++){const a=i*Math.PI/4;A.push({x:e.x,y:e.y,vx:Math.cos(a)*200,vy:Math.sin(a)*200,t:2})}}}}
+  else move(e,ux*e.spd*dt,uy*e.spd*dt);
+  if(d<e.r+P.r+4&&e.cd<=0&&e.k!='skeleton'&&e.k!='boss'){e.cd=.9;hurt(e.dmg)}}
+ for(const e of E)if(e.hp<=0){drop(e);if(e.k=='boss')say('👑 Boss yenildi!')}
+ E=E.filter(e=>e.hp>0);
+ for(const a of A){a.x+=a.vx*dt;a.y+=a.vy*dt;a.t-=dt;if(hitW(a.x,a.y,3))a.t=0;if(Math.hypot(a.x-P.x,a.y-P.y)<P.r+4){a.t=0;hurt(7)}}A=A.filter(a=>a.t>0);
+ for(const l of L)if(Math.hypot(l.x-P.x,l.y-P.y)<28){pick(l);l.d=1}L=L.filter(l=>!l.d);
+ for(const f of F){f.t-=dt;f.z+=30*dt}F=F.filter(f=>f.t>0);
+ if(!E.length){if(phase==0){phase=1;obj='Demirci Torin\'e git (E) ve güçlen!';say('Köy temiz! Demirciyle konuş.')}
+  else if(phase==2){if(wcd<=0)wcd=8;wcd-=dt;if(wcd<=0)nextWave();else obj='Sonraki dalga: '+Math.ceil(wcd)+'sn (demirciye uğra!)'}}}
+function nearNPC(){return Math.hypot(P.x-NPC.x,P.y-NPC.y)<90}
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=1;if(k==' '||k=='tab')e.preventDefault();
+ if(scene=='menu'&&(k=='enter'||k==' '))scene='story';else if(scene=='story'&&(k=='enter'||k==' '))nextStory();else if(scene=='dead'&&k=='enter')start();
+ else if(scene=='play'){if(k=='tab')ov=ov=='inv'?null:'inv';else if(k=='escape')ov=null;else if(k=='e'){if(ov=='shop')ov=null;else if(!ov&&nearNPC()){ov='shop';if(phase==1){phase=2;obj='Köyü koru!';wcd=10}}}
+  else if('123'.includes(k)&&k.length==1)P.sel=+k-1;else if(!ov&&(k=='z'||k==' '))attack()}});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=0);
+function nextStory(){if(++sti>=STORY.length)start()}
+cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();mouse.x=(e.clientX-r.left)*960/r.width;mouse.y=(e.clientY-r.top)*600/r.height});
+cv.addEventListener('wheel',e=>{if(scene=='play'){P.sel=(P.sel+(e.deltaY>0?1:2))%3}});
+cv.addEventListener('mousedown',()=>{if(scene=='menu')scene='story';else if(scene=='story')nextStory();else if(scene=='dead')start();
+ else{for(let i=UB.length-1;i>=0;i--){const b=UB[i];if(mouse.x>b[0]&&mouse.x<b[0]+b[2]&&mouse.y>b[1]&&mouse.y<b[1]+b[3]){b[4]();return}}if(!ov)attack()}});
+// ---- çizim ----
+function drawGround(){for(let i=0;i<30;i++)for(let j=0;j<22;j++){const x=i*50,y=j*50,p=pr(x+25,y+25);if(p[0]<-60||p[0]>1020||p[1]<-40||p[1]>640)continue;
+ const path=Math.abs(x+25-W/2)<100||Math.abs(y+25-H/2)<100,c=path?((i+j)%2?'#a88c60':'#9f8458'):((i+j)%2?'#52903c':'#4b8636');
+ poly([pr(x,y),pr(x+50,y),pr(x+50,y+50),pr(x,y+50)],c)}}
+function build(){const it=[];
+ for(let x=0;x<W;x+=60){for(const y of [0,H-60])it.push({d:x+y+60,f:()=>bx(x+30,y+30,0,30,30,44,'#707070')})}
+ for(let y=60;y<H-60;y+=60){for(const x of [0,W-60])it.push({d:x+y+60,f:()=>bx(x+30,y+30,0,30,30,44,'#707070')})}
+ for(const b of BL){const mx=b[0]+b[2]/2,my=b[1]+b[3]/2;it.push({d:mx+my,f:()=>{bx(mx,my,0,b[2]/2,b[3]/2,b[4],b[5]);bx(mx,my,b[4],b[2]/2+8,b[3]/2+8,14,b[6]);bx(mx,my,b[4]+14,b[2]/2-20,b[3]/2-20,14,b[6]);bx(mx-b[2]/2+.5,my+20,0,.5,12,36,'#432')}})}
+ for(const [x,y] of TR)it.push({d:x+y,f:()=>{shadow(x,y,24);bx(x,y,0,6,6,30,'#6b4a2a');bx(x,y,30,22,22,22,'#2f7a2f');bx(x,y,52,14,14,14,'#3a8a3a')}});
+ it.push({d:1570,f:()=>{bx(770,550,0,30,30,22,'#888');bx(770,550,22,20,20,1,'#35a')}});
+ it.push({d:NPC.x+NPC.y,f:()=>{bx(295,NPC.y,0,10,7,12,'#444');human(NPC.x,NPC.y,1.1,'#d0a070','#6a3a2a','#333',0,0);const p=pr(NPC.x,NPC.y,52);g.fillStyle='#fff';g.font='bold 12px monospace';g.textAlign='center';g.fillText(nearNPC()?'[E] Demirci Torin':'Demirci Torin',p[0],p[1])}});
+ for(const l of L)it.push({d:l.x+l.y,f:()=>{const p=pr(l.x,l.y,10+Math.sin(t*4)*3);g.font='20px serif';g.textAlign='center';g.fillText(LI[l.t],p[0],p[1])}});
+ for(const e of E)it.push({d:e.x+e.y,f:()=>{const fl=e.fl;
+  if(e.k=='spider')spider(e.x,e.y,e.wk,fl);else{const s=e.k=='boss'?2:1,z=e.k=='zombie';human(e.x,e.y,s,e.k=='skeleton'?'#e8e8e0':z?'#6a9a4a':'#d8b020',e.k=='skeleton'?'#d0d0c8':z?'#3a7a8a':'#c89010',e.k=='skeleton'?'#bbb':z?'#3a3a8a':'#a07010',e.wk,fl);if(s==2)bx(e.x,e.y,66,7,7,6,'#ffd700')}
+  const p=pr(e.x,e.y,e.k=='boss'?80:e.k=='spider'?16:44);g.fillStyle='#300';g.fillRect(p[0]-20,p[1],40,4);g.fillStyle='#e33';g.fillRect(p[0]-20,p[1],40*e.hp/e.max,4)}});
+ it.push({d:P.x+P.y,f:()=>{const ar=P.armor;human(P.x,P.y,1,'#e0b080',ar?ar.col:'#3a7bd5','#2a3a8a',P.wk,P.hit);if(ar)bx(P.x,P.y,32,6,6,3,ar.col);
+  const w=P.hot[P.sel],col=w&&w.col||'#ccc',sw=P.sw>0?(1-P.sw/.2)*2-1:0,a=P.ang+sw*1.0;
+  if(w&&w.t=='p'||w&&w.t=='a')return;const L0=w?w.rg*.5:20;const a0=pr(P.x,P.y,18),a1=pr(P.x+Math.cos(a)*L0,P.y+Math.sin(a)*L0,18);
+  g.strokeStyle=col;g.lineWidth=5;g.beginPath();g.moveTo(...a0);g.lineTo(...a1);g.stroke();g.lineWidth=1;
+  if(P.sw>0){g.strokeStyle='rgba(255,255,255,.8)';g.lineWidth=4;g.beginPath();for(let k=-1.2;k<=1.2;k+=.2){const q=pr(P.x+Math.cos(P.ang+k)*60,P.y+Math.sin(P.ang+k)*60,16);k<-1.1?g.moveTo(...q):g.lineTo(...q)}g.stroke();g.lineWidth=1}}});
+ for(const a of A)it.push({d:a.x+a.y,f:()=>{const p=pr(a.x,a.y,16),q=pr(a.x-a.vx*.04,a.y-a.vy*.04,16);g.strokeStyle='#ddd';g.lineWidth=3;g.beginPath();g.moveTo(...p);g.lineTo(...q);g.stroke();g.lineWidth=1}});
+ return it.sort((a,b)=>a.d-b.d)}
+function draw(){g.fillStyle='#0c0a09';g.fillRect(0,0,960,600);UB=[];
+ if(P&&scene!='menu'&&scene!='story'){cx=(P.x-P.y)*AX+(Math.random()-.5)*shake;cy=(P.x+P.y)*BX-20+(Math.random()-.5)*shake}else{cx=(W/2-H/2)*AX-200+Math.sin(t*.3)*100;cy=(W/2+H/2)*BX-200;if(!P)P={x:W/2,y:H/2,hot:[],bag:[],sel:0,armor:null,sw:0,hit:0,wk:0,ang:0}}
+ drawGround();build().forEach(i=>i.f());
+ g.font='bold 15px monospace';g.textAlign='center';for(const f of F){const p=pr(f.x,f.y,f.z);g.fillStyle=f.c;g.fillText(f.s,p[0],p[1])}
+ if(scene=='menu')menu();else if(scene=='story')story();else{hud();if(ov=='inv')inv();if(ov=='shop')shop();if(scene=='dead')dead()}}
+function slot(x,y,it,sel,fn,sz=56){g.fillStyle='rgba(20,20,20,.8)';g.fillRect(x,y,sz,sz);g.strokeStyle=sel?'#ffd54a':'#777';g.lineWidth=sel?3:2;g.strokeRect(x,y,sz,sz);g.lineWidth=1;
+ if(it){g.font='26px serif';g.textAlign='center';g.fillStyle='#fff';g.fillText(it.ic,x+sz/2,y+sz/2+8);g.font='11px monospace';g.fillText(it.t=='w'?'⚔'+(it.d+dmgB()):it.t=='a'?'🛡'+it.def:'x'+it.c,x+sz/2,y+sz-4)}
+ if(fn)UB.push([x,y,sz,sz,fn])}
+function hud(){g.textAlign='left';g.fillStyle='rgba(0,0,0,.55)';g.fillRect(10,10,230,74);g.fillStyle='#400';g.fillRect(18,18,214,16);g.fillStyle='#d33';g.fillRect(18,18,214*Math.max(0,P.hp)/P.max,16);
+ g.fillStyle='#fff';g.font='12px monospace';g.fillText(Math.ceil(P.hp)+'/'+P.max,24,31);g.fillStyle='#223';g.fillRect(18,40,214,8);g.fillStyle='#4cf';g.fillRect(18,40,214*P.xp/(P.lvl*20),8);
+ g.fillStyle='#fff';g.fillText('Lv '+P.lvl+'  🛡️'+def()+'  💎'+P.em,18,68);
+ g.textAlign='center';g.fillStyle='rgba(0,0,0,.55)';g.fillRect(300,10,360,26);g.fillStyle='#ffd54a';g.font='13px monospace';g.fillText('🎯 '+obj,480,28);
+ if(msgT>0){g.font='bold 26px monospace';g.fillText(msg,480,90)}
+ for(let i=0;i<3;i++){slot(480-90+i*60-2+ -0,534,P.hot[i],P.sel==i,()=>P.sel=i);g.fillStyle='#aaa';g.font='11px monospace';g.textAlign='left';g.fillText(i+1,480-90+i*60+3,546)}
+ g.textAlign='center';g.fillStyle='rgba(255,255,255,.5)';g.font='11px monospace';g.fillText('WASD · Mouse yön · Z/Boşluk/Tık saldır · 1-3 slot · E konuş · Tab envanter',480,596)}
+function inv(){g.fillStyle='rgba(0,0,0,.75)';g.fillRect(150,50,660,470);g.strokeStyle='#ffd54a';g.strokeRect(150,50,660,470);g.fillStyle='#ffd54a';g.font='bold 22px monospace';g.textAlign='center';g.fillText('ENVANTER',480,85);
+ g.fillStyle='#fff';g.font='14px monospace';g.textAlign='left';[`Level ${P.lvl}`,`Can ${Math.ceil(P.hp)}/${P.max}`,`Hasar +${dmgB()} (seviye)`,`Savunma ${def()}`,`Zümrüt 💎 ${P.em}`].forEach((s,i)=>g.fillText(s,175,130+i*24));
+ g.fillText('Zırh:',175,280);slot(175,290,P.armor,0,()=>{const i=P.bag.indexOf(null);if(P.armor&&i>=0){P.bag[i]=P.armor;P.armor=null}});
+ g.fillText('Hotbar (tıkla=seç, seçiliye tıkla=çanta):',175,390);P.hot.forEach((h,i)=>slot(175+i*64,400,h,P.sel==i,()=>{if(P.sel==i&&h){const j=P.bag.indexOf(null);if(j>=0){P.bag[j]=h;P.hot[i]=null}}else P.sel=i}));
+ g.fillText('Çanta (tıkla: kuşan / hotbar\'a koy):',400,130);
+ P.bag.forEach((it,i)=>slot(400+(i%4)*68,145+((i/4)|0)*68,it,0,()=>{if(!it)return;if(it.t=='a'){P.bag[i]=P.armor;P.armor=it}else{P.bag[i]=P.hot[P.sel];P.hot[P.sel]=it}}));
+ g.fillStyle='#999';g.font='12px monospace';g.fillText('Tab / Esc: kapat',175,500)}
+function shop(){g.fillStyle='rgba(0,0,0,.8)';g.fillRect(200,50,560,490);g.strokeStyle='#ffd54a';g.strokeRect(200,50,560,490);g.fillStyle='#ffd54a';g.font='bold 22px monospace';g.textAlign='center';g.fillText('⚒️ DEMİRCİ TORİN',480,85);
+ g.fillStyle='#ddd';g.font='13px monospace';g.fillText('"Zümrütün varsa seni güçlendiririm evlat!"   💎 '+P.em,480,110);
+ SHOP.forEach(([k,pr_],i)=>{const it=IT[k],y=130+i*62,ok=P.em>=pr_;g.fillStyle='rgba(255,255,255,.08)';g.fillRect(225,y,510,54);g.font='28px serif';g.textAlign='left';g.fillStyle='#fff';g.fillText(it.ic,235,y+37);
+  g.font='15px monospace';g.fillText(it.n,285,y+24);g.fillStyle='#aaa';g.font='12px monospace';g.fillText(it.t=='w'?`Hasar ${it.d} · Hız ${(1/it.cd).toFixed(1)}`:it.t=='a'?`Savunma +${it.def}`:'50 can yeniler',285,y+42);
+  g.fillStyle=ok?'#2a7a2a':'#555';g.fillRect(630,y+8,95,38);g.fillStyle='#fff';g.textAlign='center';g.font='14px monospace';g.fillText('💎'+pr_+' Al',677,y+32);
+  UB.push([630,y+8,95,38,()=>{if(P.em>=pr_){P.em-=pr_;give(k);say('Satın alındı: '+it.n+(it.t=='p'?'':' (Tab → çanta)'))}else say('Yetersiz zümrüt!')}])});
+ g.fillStyle='#999';g.font='12px monospace';g.textAlign='center';g.fillText('E / Esc: kapat',480,525)}
+function dead(){g.fillStyle='rgba(60,0,0,.75)';g.fillRect(0,0,960,600);g.fillStyle='#fff';g.textAlign='center';g.font='bold 56px monospace';g.fillText('ÖLDÜN 💀',480,270);g.font='20px monospace';g.fillText('Dalga '+wave+' · Level '+P.lvl,480,320);g.fillText('Enter / Tık: tekrar dene',480,370)}
+function menu(){g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,960,600);g.textAlign='center';g.fillStyle='#7ed957';g.font='bold 64px monospace';g.fillText('MINECRAFT',480,200);g.fillStyle='#ffd54a';g.fillText('DUNGEONS 2',480,270);
+ g.fillStyle='#fff';g.font='24px monospace';g.fillText(Math.floor(t*2)%2?'[ OYNA ]  (Enter / Tık)':'  OYNA  ',480,370)}
+function story(){g.fillStyle='rgba(0,0,0,.7)';g.fillRect(0,0,960,600);g.fillStyle='#ffd54a';g.font='bold 24px monospace';g.textAlign='center';g.fillText('📖 Kerpiç Köyü',480,150);g.fillStyle='#fff';g.font='20px monospace';
+ for(let i=0;i<=sti;i++)g.fillStyle=i==sti?'#fff':'#999',g.fillText(STORY[i],480,230+i*44);g.fillStyle='#aaa';g.font='14px monospace';g.fillText('Enter / Tık: devam',480,540)}
+let last=performance.now();(function loop(n){const dt=Math.min(.05,(n-last)/1000);last=n;if(scene=='play'&&!ov)update(dt);else t+=dt;draw();requestAnimationFrame(loop)})(last);
+</script></body></html>
